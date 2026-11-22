@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#1a73e8" />
+  <link rel="manifest" href="manifest.json" />
+  <title>CloudDoc Editor</title>
+  <script src="https://unpkg.com"></script>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 0; background: #f3f4f6; display: flex; flex-direction: column; height: 100vh; }
+    header { background: #1a73e8; color: white; padding: 10px 16px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    header button, header label { background: rgba(255,255,255,0.2); border: none; color: white; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 14px; }
+    #editor { flex: 1; background: white; margin: 12px auto; width: 92%; max-width: 800px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); outline: none; overflow-y: auto; line-height: 1.6; }
+  </style>
+</head>
+<body>
+  <header>
+    <strong>CloudDoc</strong>
+    <button onclick="document.execCommand('bold')"><b>B</b></button>
+    <button onclick="document.execCommand('italic')"><i>I</i></button>
+    <button onclick="document.execCommand('underline')"><u>U</u></button>
+    <label>Open .docx <input type="file" id="upload" accept=".docx" hidden /></label>
+    <button onclick="downloadDoc()">Save .doc</button>
+  </header>
+  <div id="editor" contenteditable="true">Start typing or tap Open .docx...</div>
+
+  <script>
+    const editor = document.getElementById('editor');
+    editor.innerHTML = localStorage.getItem('cloudDocContent') || editor.innerHTML;
+    editor.addEventListener('input', () => localStorage.setItem('cloudDocContent', editor.innerHTML));
+
+    document.getElementById('upload').addEventListener('change', (e) => {
+      if (!e.target.files) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => mammoth.convertToHtml({ arrayBuffer: ev.target.result })
+        .then(res => { editor.innerHTML = res.value; localStorage.setItem('cloudDocContent', res.value); });
+      reader.readAsArrayBuffer(e.target.files);
+    });
+
+    function downloadDoc() {
+      const blob = new Blob(['<html><body>' + editor.innerHTML + '</body></html>'], { type: 'application/msword' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'document.doc';
+      a.click();
+    }
+  </script>
+</body>
+</html>
